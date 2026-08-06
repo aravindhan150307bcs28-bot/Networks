@@ -1,0 +1,137 @@
+problem 476:
+
+
+#include <stdio.h>
+#include <stdlib.h>
+
+/*
+ * Complete the 'findComplement' function below.
+ * Time Complexity: O(1) - The loop runs at most 31 times.
+ * Space Complexity: O(1) - Constant auxiliary space.
+ */
+int findComplement(int num) {
+    // If num is 0, its complement is 1
+    if (num == 0) return 1;
+
+    unsigned int mask = 0;
+    unsigned int temp = num;
+
+    // Create a bitmask of 1s matching the bit length of num
+    while (temp > 0) {
+        mask = (mask << 1) | 1;
+        temp >>= 1;
+    }
+
+    // XORing with the mask flips all the bits up to the highest set bit
+    return num ^ mask;
+}
+
+int main() {
+    // Test Case 1
+    int test1 = 5;
+    printf("Input: %d, Complement: %d\n", test1, findComplement(test1)); // Expected: 2
+
+    // Test Case 2
+    int test2 = 1;
+    printf("Input: %d, Complement: %d\n", test2, findComplement(test2)); // Expected: 0
+
+    // Test Case 3 (Constraint maximum edge case)
+    int test3 = 2147483647; // 2^31 - 1
+    printf("Input: %d, Complement: %d\n", test3, findComplement(test3)); // Expected: 0
+
+    return 0;
+}
+
+probelm 338:
+#include <stdio.h>
+#include <stdlib.h>
+
+/**
+ * Note: The returned array must be malloced, assume caller frees it.
+ */
+int* countBits(int n, int* returnSize) {
+    // The result array needs to be of size n + 1 (from 0 to n inclusive)
+    *returnSize = n + 1;
+    
+    int* ans = (int*)malloc((*returnSize) * sizeof(int));
+    if (!ans) {
+        return NULL;
+    }
+
+    // Base case
+    ans[0] = 0;
+
+    // Dynamic Programming: state transition relation
+    for (int i = 1; i <= n; i++) {
+        // ans[i] = ans[i / 2] + (1 if i is odd, 0 if even)
+        ans[i] = ans[i >> 1] + (i & 1);
+    }
+
+    return ans;
+}
+
+int main() {
+    int n = 5;
+    int returnSize;
+    
+    // Call the function
+    int* result = countBits(n, &returnSize);
+
+    // Print output array
+    printf("Input n: %d\n", n);
+    printf("Output: [");
+    for (int i = 0; i < returnSize; i++) {
+        printf("%d", result[i]);
+        if (i < returnSize - 1) {
+            printf(",");
+        }
+    }
+    printf("]\n");
+
+    // Clean up dynamic memory
+    free(result);
+
+    return 0;
+}
+
+problem 421:
+
+class Solution(object):
+    def findMaximumXOR(self, nums):
+        mxBit = max(nums).bit_length()
+        trie=[[-1,-1]]
+        def insert(num):
+            node=0
+            for i in range(mxBit-1,-1,-1):
+                bit=(num>>i)&1
+                if trie[node][bit]==-1:
+                    trie[node][bit]=len(trie)
+                    trie.append([-1,-1])
+                node=trie[node][bit]
+
+        def getMax(num):
+            node=0
+            ans=0
+
+            for i in range(mxBit-1,-1,-1):
+                bit=(num>>i)&1
+                opp=1-bit
+                if trie[node][opp]!=-1:
+                    ans|=(1<<i)
+                    node=trie[node][opp]
+                else:
+                    node=trie[node][bit]
+            return ans
+
+        for num in nums:
+            insert(num)
+        
+        res=0
+        for num in nums:
+            res=max(res,getMax(num))
+        
+        return res
+
+        
+
+
