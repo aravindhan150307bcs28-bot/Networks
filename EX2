@@ -1,0 +1,182 @@
+problem 67:
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+/*
+ * Complete the 'addBinary' function below.
+ * Time Complexity: O(max(N, M)) - Linear pass over strings 'a' and 'b'.
+ * Space Complexity: O(max(N, M)) - Output string allocation layout.
+ */
+char* addBinary(char* a, char* b) {
+    int len_a = strlen(a);
+    int len_b = strlen(b);
+    
+    // The max length of the result can be max(len_a, len_b) + 1 (for an extra carry)
+    int max_len = (len_a > len_b ? len_a : len_b) + 1;
+    
+    // Allocate space for the result string + 1 for null-terminator
+    char* result = (char*)malloc((max_len + 1) * sizeof(char));
+    if (!result) return NULL;
+    
+    result[max_len] = '\0'; // Set the null-terminator at the end
+    
+    int i = len_a - 1;
+    int j = len_b - 1;
+    int k = max_len - 1;
+    int carry = 0;
+    
+    // Loop from right to left until all digits and carry are processed
+    while (i >= 0 || j >= 0 || carry > 0) {
+        int sum = carry;
+        
+        if (i >= 0) {
+            sum += a[i] - '0'; // Convert char digit to integer
+            i--;
+        }
+        if (j >= 0) {
+            sum += b[j] - '0';
+            j--;
+        }
+        
+        result[k] = (sum % 2) + '0'; // Current binary digit ('0' or '1')
+        carry = sum / 2;             // Calculate new carry
+        k--;
+    }
+    
+    // If the loop finished and didn't use the very first slot (no overflow carry),
+    // we shift the pointer forward to ignore the unused leading space.
+    if (k == 0) {
+        // Move the whole string content one step left to clear the empty front slot
+        memmove(result, result + 1, max_len);
+    }
+    
+    return result;
+}
+
+int main() {
+    // Test Case 1
+    char* a1 = "11";
+    char* b1 = "1";
+    char* res1 = addBinary(a1, b1);
+    printf("Input: a = \"%s\", b = \"%s\" -> Output: \"%s\"\n", a1, b1, res1); // Expected: "100"
+    free(res1);
+
+    // Test Case 2
+    char* a2 = "1010";
+    char* b2 = "1011";
+    char* res2 = addBinary(a2, b2);
+    printf("Input: a = \"%s\", b = \"%s\" -> Output: \"%s\"\n", a2, b2, res2); // Expected: "10101"
+    free(res2);
+
+    return 0;
+}
+
+problem 693:
+
+#include <stdbool.h>
+
+/*
+ * LeetCode 693: Binary Number with Alternating Bits
+ * Time Complexity: O(1)
+ * Space Complexity: O(1)
+ */
+bool hasAlternatingBits(int n) {
+    // Shift n right by 1 and XOR with n.
+    // If bits alternate, x will be a number composed entirely of 1s (e.g., 1111).
+    unsigned int x = (unsigned int)n ^ ((unsigned int)n >> 1);
+    
+    // Check if x + 1 clears all bits to 0 when ANDed with x
+    return (x & (x + 1)) == 0;
+}
+
+problem 898:
+#include <stdlib.h>
+#include <stdbool.h>
+
+// Simple hash table implementation to count distinct values
+#define HASH_SIZE 1000003
+
+typedef struct Node {
+    int key;
+    struct Node* next;
+} Node;
+
+typedef struct {
+    Node* buckets[HASH_SIZE];
+    int count;
+} HashTable;
+
+void hash_insert(HashTable* table, int key) {
+    // Map negative numbers or large values to valid array bounds
+    unsigned int hash_index = ((unsigned int)key) % HASH_SIZE;
+    Node* curr = table->buckets[hash_index];
+    
+    // Check if key already exists
+    while (curr != NULL) {
+        if (curr->key == key) return;
+        curr = curr->next;
+    }
+    
+    // Key not found, insert new element
+    Node* new_node = (Node*)malloc(sizeof(Node));
+    new_node->key = key;
+    new_node->next = table->buckets[hash_index];
+    table->buckets[hash_index] = new_node;
+    table->count++;
+}
+
+void free_hash_table(HashTable* table) {
+    for (int i = 0; i < HASH_SIZE; i++) {
+        Node* curr = table->buckets[i];
+        while (curr != NULL) {
+            Node* temp = curr;
+            curr = curr->next;
+            free(temp);
+        }
+    }
+}
+
+int subarrayBitwiseORs(int* arr, int arrSize) {
+    if (arrSize == 0) return 0;
+
+    HashTable global_set = { {NULL}, 0 };
+
+    // Set storage buffers tracking current and previous iteration steps
+    int prev_or_values[33];
+    int current_or_values[33];
+    int prev_size = 0;
+
+    for (int i = 0; i < arrSize; i++) {
+        int current_size = 0;
+        
+        // Base combination: element i by itself
+        current_or_values[current_size++] = arr[i];
+        hash_insert(&global_set, arr[i]);
+
+        // Evaluate variations with all subarrays ending at i-1
+        for (int j = 0; j < prev_size; j++) {
+            int new_or = prev_or_values[j] | arr[i];
+            
+            // Avoid inserting duplicates into the localized window set
+            if (new_or != current_or_values[current_size - 1]) {
+                current_or_values[current_size++] = new_or;
+                hash_insert(&global_set, new_or);
+            }
+        }
+
+        // Move current states to previous array tracker for the next iteration
+        for (int j = 0; j < current_size; j++) {
+            prev_or_values[j] = current_or_values[j];
+        }
+        prev_size = current_size;
+    }
+
+    int total_distinct = global_set.count;
+    
+    // Prevent memory leaks
+    free_hash_table(&global_set);
+
+    return total_distinct;
+}
+
